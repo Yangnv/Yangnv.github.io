@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国人均GDP数据可视化</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        
+        .main-chart {
+            grid-column: 1 / -1;
+            margin-bottom: 30px;
+        }
+        
+        .data-table {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95em;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tr:hover {
+            background-color: #e3f2fd;
+            transition: background-color 0.3s ease;
+        }
+        
+        .positive {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>中国人均GDP发展趋势</h1>
+        <p class="subtitle">2015-2024年数据可视化分析</p>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">$13,445</div>
+                <div class="stat-label">2024年人均GDP (USD)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">95,749</div>
+                <div class="stat-label">2024年人均GDP (RMB)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">5.1%</div>
+                <div class="stat-label">2024年增长率</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">69.7%</div>
+                <div class="stat-label">十年总增长 (USD)</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container main-chart">
+                <div class="chart-title">人均GDP发展趋势对比</div>
+                <canvas id="mainChart" height="120"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">年度增长率变化</div>
+                <canvas id="growthChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">汇率变化趋势</div>
+                <canvas id="exchangeChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="data-table">
+            <div class="chart-title">详细数据表格</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>年份</th>
+                        <th>人均GDP (USD)</th>
+                        <th>人均GDP (RMB)</th>
+                        <th>增长率</th>
+                        <th>汇率 (USD/RMB)</th>
+                        <th>汇率变化</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 数据定义
+        const data = [
+            {year: 2015, gdpUSD: 7924, gdpRMB: 49351, growth: 6.3, exchange: 6.2284, exchangeChange: -1.4},
+            {year: 2016, gdpUSD: 8127, gdpRMB: 53980, growth: 6.1, exchange: 6.6423, exchangeChange: -6.2},
+            {year: 2017, gdpUSD: 8836, gdpRMB: 59660, growth: 6.3, exchange: 6.7518, exchangeChange: -1.6},
+            {year: 2018, gdpUSD: 9769, gdpRMB: 64644, growth: 6.1, exchange: 6.6174, exchangeChange: 2.0},
+            {year: 2019, gdpUSD: 10276, gdpRMB: 70892, growth: 5.7, exchange: 6.8985, exchangeChange: -4.1},
+            {year: 2020, gdpUSD: 10504, gdpRMB: 72447, growth: 2.0, exchange: 6.8974, exchangeChange: 0.02},
+            {year: 2021, gdpUSD: 12551, gdpRMB: 80976, growth: 8.0, exchange: 6.4515, exchangeChange: 6.9},
+            {year: 2022, gdpUSD: 12741, gdpRMB: 85698, growth: 3.0, exchange: 6.7261, exchangeChange: -4.1},
+            {year: 2023, gdpUSD: 12681, gdpRMB: 89358, growth: 5.4, exchange: 7.0467, exchangeChange: -4.5},
+            {year: 2024, gdpUSD: 13445, gdpRMB: 95749, growth: 5.1, exchange: 7.1217, exchangeChange: -1.1}
+        ];
+
+        // 图表配置
+        Chart.defaults.font.family = "'Microsoft YaHei', Arial, sans-serif";
+        Chart.defaults.color = '#2c3e50';
+
+        // 主要趋势图
+        const mainCtx = document.getElementById('mainChart').getContext('2d');
+        new Chart(mainCtx, {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.year),
+                datasets: [{
+                    label: 'USD',
+                    data: data.map(d => d.gdpUSD),
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                }, {
+                    label: 'RMB',
+                    data: data.map(d => d.gdpRMB),
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: '年份'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'USD'
+                        },
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'RMB'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+
+        // 增长率图表
+        const growthCtx = document.getElementById('growthChart').getContext('2d');
+        new Chart(growthCtx, {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.year),
+                datasets: [{
+                    label: '增长率 (%)',
+                    data: data.map(d => d.growth),
+                    backgroundColor: data.map(d => d.growth >= 5 ? 'rgba(39, 174, 96, 0.8)' : 'rgba(241, 196, 15, 0.8)'),
+                    borderColor: data.map(d => d.growth >= 5 ? '#27ae60' : '#f1c40f'),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '增长率 (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // 汇率图表
+        const exchangeCtx = document.getElementById('exchangeChart').getContext('2d');
+        new Chart(exchangeCtx, {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.year),
+                datasets: [{
+                    label: '汇率 (USD/RMB)',
+                    data: data.map(d => d.exchange),
+                    borderColor: '#9b59b6',
+                    backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: '汇率'
+                        }
+                    }
+                }
+            }
+        });
+
+        // 填充数据表格
+        const tableBody = document.getElementById('dataTableBody');
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${row.year}</strong></td>
+                <td>$${row.gdpUSD.toLocaleString()}</td>
+                <td>¥${row.gdpRMB.toLocaleString()}</td>
+                <td class="${row.growth >= 5 ? 'positive' : 'negative'}">${row.growth}%</td>
+                <td>${row.exchange}</td>
+                <td class="${row.exchangeChange > 0 ? 'positive' : 'negative'}">${row.exchangeChange > 0 ? '+' : ''}${row.exchangeChange}%</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    </script>
+</body>
+</html>
